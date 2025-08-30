@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="fr"> <!-- Langue initiale, modifiée par JS si besoin -->
+<head>
+    <meta charset="UTF-8"> <!-- ESSENTIEL pour l'arabe -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plans Hebdomadaires</title> <!-- Titre initial, modifié par JS si besoin -->
+
+    <!-- Google Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome pour les icônes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+        integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- Bibliothèque XLSX pour lire/écrire les fichiers Excel côté client -->
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+    <!-- Bibliothèque FileSaver.js pour déclencher le téléchargement des fichiers générés -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <!-- Lien vers VOTRE fichier CSS (style.css) - Assurez-vous qu'il est à jour -->
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body dir="ltr"> <!-- Direction initiale, modifiée par JS si besoin -->
+
+    <!-- ======================== -->
+    <!-- FORMULAIRE DE CONNEXION  -->
+    <!-- ======================== -->
+    <div id="login-form">
+        <img id="logo"
+             src="https://cdn.glitch.global/1c613b14-019c-488a-a856-d55d64d174d0/al-kawthar-international-schools-jeddah-saudi-arabia-modified.png?v=1739565146299"
+             alt="Logo Al-Kawthar">
+        <h1>Connexion</h1> <!-- Traduit par JS si besoin -->
+        <div>
+            <label for="username">Nom d'utilisateur (Enseignant) :</label> <!-- Traduit par JS si besoin -->
+            <input type="text" id="username" name="username" required>
+        </div>
+        <div class="password-container">
+            <label for="password">Mot de passe (idem Nom) :</label> <!-- Traduit par JS si besoin -->
+            <input type="password" id="password" name="password" required>
+            <i class="fas fa-eye password-toggle-icon" id="togglePassword"></i>
+        </div>
+        <div class="remember-me-container">
+            <input type="checkbox" id="rememberMe" name="rememberMe">
+            <label for="rememberMe" id="remember-me-label">Rester connecté</label> <!-- Traduit par JS si besoin -->
+        </div>
+        <button id="login-button" class="pro-button"><i class="fas fa-sign-in-alt"></i> <span class="btn-text">Se connecter</span></button> <!-- Texte traduit par JS si besoin -->
+        <p id="login-error"></p>
+    </div>
+
+    <!-- ======================== -->
+    <!-- CONTENU PRINCIPAL        -->
+    <!-- ======================== -->
+    <div id="main-content" style="display: none;"> <!-- Caché initialement, affiché par JS après login -->
+
+        <!-- Zone Supérieure : Logo, Titre, Infos Utilisateur & Déconnexion -->
+        <div class="main-header-container">
+            <img id="logo-main"
+                 src="https://cdn.glitch.global/1c613b14-019c-488a-a856-d55d64d174d0/al-kawthar-international-schools-jeddah-saudi-arabia-modified.png?v=1739565146299"
+                 alt="Logo Al-Kawthar">
+
+            <div class="title-user-info">
+                 <h1 id="main-title">Plans Hebdomadaires</h1> <!-- Traduit par JS si besoin -->
+                 <!-- La date/semaine est remplie par JS (formatDateForDisplay) -->
+                 <h2 id="weekDateRange"></h2>
+                 <!-- Infos utilisateur et bouton Déconnexion -->
+                 <div class="user-actions-container">
+                    <span id="loggedInUserInfo" style="font-style: italic;"></span>
+                    <button id="logout-button" class="pro-button danger-button">
+                        <i class="fas fa-sign-out-alt"></i> <span class="btn-text">Déconnecter</span> <!-- Traduit par JS si besoin -->
+                    </button>
+                 </div>
+            </div>
+        </div>
+
+        <!-- Bouton pour afficher/masquer la liste des enseignants incomplets (Style CSS pour fixe) -->
+         <button id="toggleIncompleteBtn" onclick="toggleIncompleteList()" class="pro-button toggle-incomplete-btn">
+             <i class="fas fa-list-check"></i> <span class="btn-text">Afficher Incomplets</span> <!-- Texte traduit par JS -->
+        </button>
+
+        <!-- Zone pour afficher les enseignants incomplets (cachée par défaut) -->
+        <div id="incompleteTeachersDisplay" style="display: none;">
+            <h4>Enseignants Incomplets (Travaux)</h4> <!-- Traduit par JS -->
+            <ul id="incompleteList">
+                <li>Chargement...</li> <!-- Traduit par JS -->
+            </ul>
+        </div>
+
+        <!-- Conteneur pour le sélecteur de semaine -->
+        <div class="filter-container week-selector-container">
+            <label for="weekSelector"><i class="fas fa-calendar-week"></i> Semaine:</label> <!-- Icône conservée -->
+            <select id="weekSelector" onchange="loadPlanForWeek()">
+                 <option value="">-- Sélectionnez une semaine --</option> <!-- Traduit par JS -->
+                 <!-- ===== MODIFICATION : SEMAINES 1 à 43 ===== -->
+                 <option value="1">Semaine 1</option>
+                 <option value="2">Semaine 2</option>
+                 <option value="3">Semaine 3</option>
+                 <option value="4">Semaine 4</option>
+                 <option value="5">Semaine 5</option>
+                 <option value="6">Semaine 6</option>
+                 <option value="7">Semaine 7</option>
+                 <option value="8">Semaine 8</option>
+                 <option value="9">Semaine 9</option>
+                 <option value="10">Semaine 10</option>
+                 <option value="11">Semaine 11</option>
+                 <option value="12">Semaine 12</option>
+                 <option value="13">Semaine 13</option>
+                 <option value="14">Semaine 14</option>
+                 <option value="15">Semaine 15</option>
+                 <option value="16">Semaine 16</option>
+                 <option value="17">Semaine 17</option>
+                 <option value="18">Semaine 18</option>
+                 <option value="19">Semaine 19</option>
+                 <option value="20">Semaine 20</option>
+                 <option value="21">Semaine 21</option>
+                 <option value="22">Semaine 22</option>
+                 <option value="23">Semaine 23</option>
+                 <option value="24">Semaine 24</option>
+                 <option value="25">Semaine 25</option>
+                 <option value="26">Semaine 26</option>
+                 <option value="27">Semaine 27</option>
+                 <option value="28">Semaine 28</option>
+                 <option value="29">Semaine 29</option>
+                 <option value="30">Semaine 30</option>
+                 <option value="31">Semaine 31</option>
+                 <option value="32">Semaine 32</option>
+                 <option value="33">Semaine 33</option>
+                 <option value="34">Semaine 34</option>
+                 <option value="35">Semaine 35</option>
+                 <option value="36">Semaine 36</option>
+                 <option value="37">Semaine 37</option>
+                 <option value="38">Semaine 38</option>
+                 <option value="39">Semaine 39</option>
+                 <option value="40">Semaine 40</option>
+                 <option value="41">Semaine 41</option>
+                 <option value="42">Semaine 42</option>
+                 <option value="43">Semaine 43</option>
+                 <!-- ===== FIN MODIFICATION SEMAINES ===== -->
+                 <option value="44">Semaine 44</option> <!-- Options originales conservées -->
+                 <option value="45">Semaine 45</option>
+                 <option value="46">Semaine 46</option>
+                 <option value="47">Semaine 47</option>
+                 <option value="48">Semaine 48</option>
+            </select>
+        </div>
+
+        <!-- ======================== -->
+        <!-- SECTION ADMIN            -->
+        <!-- ======================== -->
+        <div id="admin-actions" class="filter-container admin-section" style="display: none;">
+             <h3 id="admin-title">Actions Administrateur</h3> <!-- Traduit par JS -->
+             <div>
+                <label for="excelFileInput" id="admin-excel-label"><i class="fas fa-file-excel"></i> Fichier Excel :</label> <!-- Icône conservée -->
+                <input type="file" id="excelFileInput" accept=".xlsx, .xls" onchange="handleFileUpload(event)">
+             </div>
+             <button id="saveUploadedDataBtn" onclick="saveUploadedData()" disabled class="pro-button accent-button"> <!-- Style conservé -->
+                 <i class="fas fa-database"></i> <span class="btn-text">Charger et Enregistrer dans la DB</span> <!-- Traduit par JS -->
+             </button>
+             <span id="file-upload-status" style="font-size: 0.9em;"></span>
+             
+             <!-- ===== NOUVELLE SECTION : RAPPORT COMPLET PAR CLASSE ===== -->
+             <div class="admin-subsection">
+                <label for="adminReportClassSelector" id="admin-report-class-label"><i class="fas fa-school"></i> Choisir une Classe :</label>
+                <select id="adminReportClassSelector">
+                    <option value="">-- D'abord charger les classes --</option>
+                </select>
+                <button id="generateFullReportBtn" onclick="generateFullReportByClass()" class="pro-button success-button">
+                    <i class="fas fa-file-invoice"></i> <span class="btn-text">Générer Rapport Complet par Classe</span>
+                </button>
+             </div>
+             <!-- ===== FIN NOUVELLE SECTION ===== -->
+
+             <div style="width: 100%; margin-top: 10px; font-size: 0.85em; color: var(--muted-text); border-top: 1px dashed var(--border-color); padding-top: 10px;">
+                 <i class="fas fa-info-circle"></i> **Note:** La fonction d'upload et d'extraction automatique depuis des fichiers Word ou PDF n'est pas implémentée dans cette version. Veuillez utiliser le format Excel pour charger les données via le bouton ci-dessus.
+             </div>
+        </div>
+        <!-- ======================== -->
+        <!-- FIN SECTION ADMIN        -->
+        <!-- ======================== -->
+
+
+        <!-- Actions principales (Word, Excel, Sauvegarde tout) -->
+        <div class="filter-container main-actions-container">
+            <button id="generateWordBtn" onclick="generateWordByClasse()" class="action-button pro-button" disabled>
+                 <i class="fas fa-file-word"></i> <span class="btn-text">Générer Word par Classe</span> <!-- Traduit par JS -->
+            </button>
+            <button id="generateExcelBtn" onclick="generateExcelWorkbook()" class="action-button pro-button" disabled>
+                 <i class="fas fa-file-excel"></i> <span class="btn-text">Générer Excel (1 Fichier)</span> <!-- Traduit par JS -->
+            </button>
+             <button id="saveAllDisplayedBtn" onclick="saveAllDisplayedRows()" class="action-button save-all-button pro-button" disabled>
+                <i class="fas fa-save"></i> <span class="btn-text">Enregistrer Lignes Affichées</span> <!-- Traduit par JS -->
+            </button>
+            <a id="downloadLink" style="display:none;"></a>
+        </div>
+
+        <!-- Filtres -->
+        <div class="filter-container data-filters-container">
+             <label for="filterEnseignant" id="filter-enseignant-label"><i class="fas fa-user-tie"></i> Enseignant:</label> <!-- Icône conservée -->
+             <select id="filterEnseignant" onchange="sortAndDisplay()"> <option value="">Tous</option> </select>
+
+             <label for="filterClasse" id="filter-classe-label"><i class="fas fa-chalkboard-user"></i> Classe:</label> <!-- Icône conservée -->
+             <select id="filterClasse" onchange="sortAndDisplay()"> <option value="">Toutes</option> </select>
+
+             <label for="filterMatiere" id="filter-matiere-label"><i class="fas fa-book"></i> Matière:</label> <!-- Icône conservée -->
+             <select id="filterMatiere" onchange="sortAndDisplay()"> <option value="">Toutes</option> </select>
+
+             <label for="filterPeriode" id="filter-periode-label"><i class="fas fa-clock"></i> Période:</label> <!-- Icône conservée -->
+             <select id="filterPeriode" onchange="sortAndDisplay()"> <option value="">Toutes</option> </select>
+
+             <label for="filterJour" id="filter-jour-label"><i class="fas fa-calendar-day"></i> Jour:</label> <!-- Icône conservée -->
+             <select id="filterJour" onchange="sortAndDisplay()">
+                 <option value="">Tous</option>
+                 <option value="Dimanche">Dimanche</option>
+                 <option value="Lundi">Lundi</option>
+                 <option value="Mardi">Mardi</option>
+                 <option value="Mercredi">Mercredi</option>
+                 <option value="Jeudi">Jeudi</option>
+                 <!-- Options traduites par JS -->
+            </select>
+        </div>
+
+
+        <!-- Zone pour les messages d'alerte (succès/erreur) -->
+        <div id="message-alerte" style="display: none;"></div>
+
+        <!-- Barre de progression -->
+        <div id="progress-bar-container" style="display: none;">
+            <div id="progress-bar">0%</div>
+        </div>
+
+        <!-- Zone de saisie des notes PAR CLASSE -->
+         <div class="notes-container">
+            <label for="notesClassSelector" id="notes-class-label" style="font-weight: bold;"><i class="fas fa-sticky-note"></i> Notes pour la classe :</label> <!-- Icône conservée -->
+            <select id="notesClassSelector" onchange="displayClassNotes()">
+                <option value="">-- Sélectionnez une classe --</option> <!-- Traduit par JS -->
+            </select>
+
+            <textarea id="notesInput" rows="4" placeholder="Sélectionnez une classe pour voir ou ajouter des notes..." spellcheck="true" disabled dir="auto"></textarea> <!-- Traduit par JS -->
+
+            <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+                <button id="saveNotesBtn" onclick="saveNotes()" class="action-button pro-button success-button" disabled> <!-- Style conservé -->
+                    <i class="fas fa-save"></i> <span class="btn-text">Enregistrer Notes</span> <!-- Traduit par JS -->
+                </button>
+                <span id="notes-save-status" style="font-size: 0.9em;"></span>
+            </div>
+        </div>
+
+
+        <!-- Wrapper pour le tableau responsive -->
+        <div class="table-responsive-wrapper">
+            <!-- Tableau principal -->
+            <table id="planTable">
+                <thead>
+                    <tr>
+                        <!-- En-têtes générés dynamiquement par JS (createTableHeader) avec traduction -->
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Données générées par JS (displayPlanTable) -->
+                     <!-- Message initial (sera remplacé par JS) -->
+                     <tr id="initial-table-row">
+                         <td colspan="10" style="text-align:center; padding: 20px; color: grey;" id="initial-table-message">
+                             Veuillez sélectionner une semaine pour afficher les données. <!-- Texte traduit par JS -->
+                         </td>
+                     </tr>
+                </tbody>
+            </table>
+        </div> <!-- Fin de .table-responsive-wrapper -->
+
+
+    </div> <!-- Fin de #main-content -->
+
+    <!-- ======================== -->
+    <!-- SCRIPT JAVASCRIPT        -->
+    <!-- ======================== -->
+    <script>
+        // --- Début Script ---
+        console.log("Script principal démarré.");
+
+        // Variables globales (inchangées)
+        let loggedInUser = null;
+        let currentUserLanguage = 'fr';
+        let planData = [];
+        let filteredAndSortedData = [];
+        let uploadedPlanData = null;
+        let headers = [];
+        let currentWeek = null;
+        let weekStartDate = null;
+        let weeklyClassNotes = {};
+        let alertTimeoutId = null;
+        let incompleteTeachersInfo = {};
+
+        // Utilisateurs spécifiques (inchangés)
+        const arabicTeachers = ['فارس', 'محمد الزبيدي', 'جابر', 'عبد الرحمان', 'عبد العزيز'];
+        const englishTeacher = 'Ilyas';
+        const teachersToHideColumnsFor = new Set(['جابر', 'عبد الرحمان', 'عبد العزيز', 'فارس', 'محمد الزبيدي']);
+        const isArabicUser = () => currentUserLanguage === 'ar';
+
+        // Traductions (MODIFIÉES pour ajouter les nouvelles clés)
+        const translations = {
+            fr: { 
+                login_title: "Connexion", login_username_label: "Nom d'utilisateur (Enseignant) :", login_password_label: "Mot de passe (idem Nom) :", login_button_text: "Se connecter", remember_me: "Rester connecté", logout_button: "Déconnecter", main_page_title: "Plans Hebdomadaires", week_label: "Semaine:", select_week: "-- Sélectionnez une semaine --", please_select_week: "Veuillez sélectionner une semaine.", admin_actions_title: "Actions Administrateur", admin_excel_label: "Fichier Excel :", admin_save_button: "Charger et Enregistrer dans la DB", generate_word_button: "Générer Word par Classe", generate_excel_button: "Générer Excel (1 Fichier)", save_all_button: "Enregistrer Lignes Affichées", filter_teacher_label: "Enseignant:", filter_class_label: "Classe:", filter_material_label: "Matière:", filter_period_label: "Période:", filter_day_label: "Jour:", all: "Tous", all_f: "Toutes", day_sun: "Dimanche", day_mon: "Lundi", day_tue: "Mardi", day_wed: "Mercredi", day_thu: "Jeudi", days: ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"], fullDays: ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Sábado"], months: ["Janv", "Fév", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov", "Déc"], headers: { 'Leçon': 'Leçon', 'Travaux de classe': 'Travaux de classe', 'Support': 'Support', 'Devoirs': 'Devoirs', 'Enseignant': 'Enseignant', 'Classe': 'Classe', 'Matière': 'Matière', 'Période': 'Période', 'Jour': 'Jour' }, actions: "Actions", updated_at: "Mis à jour", notes_for_class: "Notes pour la classe :", select_class: "-- Sélectionnez une classe --", select_class_placeholder: "Sélectionnez une classe pour voir ou ajouter des notes...", notes_placeholder: "Notes pour {classText}...", save_notes_button: "Enregistrer Notes", saving: "Enregistrement...", saved: "Enregistré", saving_notes_for: "Enregistrement notes pour {class} S{week}", notes_saved_success: "Notes enregistrées pour {class}, S{week}.", error_saving_notes: "Erreur d'enregistrement des notes: {error}", display_incomplete: "Afficher Incomplets", hide_incomplete: "Masquer Incomplets", incomplete_teachers_title: "Enseignants Incomplets (Travaux)", loading: "Chargement...", no_data: "Aucune donnée.", all_complete: "Tout complet!", error_config_columns: "Erreur config colonnes.", welcome_user: "Bienvenue {user} ! Veuillez sélectionner une semaine.", connected_as: "Connecté: {user}", loading_data_week: "Chargement données S{week}...", data_loaded_week: "Données S{week} chargées.", no_data_found_week: "Aucune donnée trouvée pour S{week}.", error_loading_week: "Erreur chargement S{week}: {error}", select_week_to_display: "Veuillez sélectionner une semaine pour afficher les données.", error_structure: "Erreur: Structure de données non définie.", no_data_to_display_filters: "Aucune donnée à afficher avec les filtres actuels.", save_row_title: "Enregistrer cette ligne", invalid_row: "Ligne invalide.", error_saving_row: "Erreur enregistrement ligne: {error}", no_rows_to_save: "Aucune ligne affichée à enregistrer.", confirm_save_all: "Confirmer l'enregistrement des {count} lignes affichées pour la S{week}?", save_all_cancelled: "Enregistrement annulé.", saving_all_displayed: "Enregistrement des {count} lignes en cours...", save_all_success: "{count} lignes enregistrées avec succès.", save_all_partial: "Enregistrement terminé: {success} succès, {error} erreurs.", generating_word: "Génération de {count} document(s) Word...", generating_word_success: "{count} document(s) Word généré(s).", generating_word_partial: "Génération Word terminée: {ok} succès, {err} erreurs.", generating_word_failed: "Échec de la génération Word ({err} erreurs).", generating_excel: "Génération du fichier Excel S{week}...", generating_excel_success: "Fichier Excel '{filename}' généré.", error_generating_excel: "Erreur génération Excel: {error}", no_file_selected: "Aucun fichier sélectionné.", reading_file: "Lecture du fichier {fileName}...", file_read_success: "Fichier {fileName} lu ({count} lignes).", file_error: "Erreur lecture fichier: {error}", invalid_file_type: "Type de fichier invalide (.xlsx ou .xls requis).", saving_uploaded_data: "Enregistrement des données chargées pour S{week}...", uploaded_data_saved: "Données chargées enregistrées pour S{week}.", uploaded_data_error: "Erreur enregistrement données chargées: {error}", no_word_dates: "Génération Word: Dates manquantes côté serveur pour la semaine S{week}.",
+                generate_ai_lesson_plan_button: "Plan de Leçon (IA)", generating_ai_lesson_plan: "Génération du plan de leçon IA...", error_generating_ai_lesson_plan: "Erreur génération plan IA: {error}", ai_lesson_plan_generated: "Plan de leçon IA généré.",
+                // ===== NOUVELLES TRADUCTIONS =====
+                admin_report_class_label: "Choisir une Classe :",
+                generate_full_report_button: "Générer Rapport Complet par Classe",
+                loading_classes: "-- Chargement des classes --",
+                select_report_class: "-- Sélectionnez une classe pour le rapport --",
+                no_classes_found: "-- Aucune classe trouvée --",
+                generating_full_report: "Génération du rapport complet pour la classe {classe}...",
+                generating_full_report_success: "Rapport complet pour {classe} généré.",
+                generating_full_report_error: "Erreur génération du rapport pour {classe}: {error}",
+                please_select_class_for_report: "Veuillez sélectionner une classe pour générer le rapport."
+            },
+            ar: { 
+                login_title: "تسجيل الدخول", login_username_label: "اسم المستخدم (المعلم):", login_password_label: "كلمة المرور (نفس الاسم):", login_button_text: "تسجيل الدخول", remember_me: "تذكرني", logout_button: "تسجيل الخروج", main_page_title: "الخطط الأسبوعية", week_label: "الأسبوع:", select_week: "-- اختر أسبوع --", please_select_week: "يرجى اختيار أسبوع.", admin_actions_title: "إجراءات المسؤول", admin_excel_label: "ملف اكسل:", admin_save_button: "تحميل وحفظ في قاعدة البيانات", generate_word_button: "إنشاء ملف وورد حسب الفصل", generate_excel_button: "إنشاء ملف اكسل (ملف واحد)", save_all_button: "حفظ الصفوف المعروضة", filter_teacher_label: "المعلم:", filter_class_label: "الفصل:", filter_material_label: "المادة:", filter_period_label: "الحصة:", filter_day_label: "اليوم:", all: "الكل", all_f: "الكل", day_sun: "الأحد", day_mon: "الاثنين", day_tue: "الثلاثاء", day_wed: "الأربعاء", day_thu: "الخميس", days: ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], fullDays: ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"], months: ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"], headers: { 'Leçon': 'الدرس', 'Travaux de classe': 'أعمال الفصل', 'Support': 'الدعم', 'Devoirs': 'الواجبات', 'Enseignant': 'المعلم', 'Classe': 'الفصل', 'Matière': 'المادة', 'Période': 'الحصة', 'Jour': 'اليوم' }, actions: "إجراءات", updated_at: "آخر تحديث", notes_for_class: "ملاحظات للفصل:", select_class: "-- اختر فصل --", select_class_placeholder: "اختر فصلًا لعرض أو إضافة ملاحظات...", notes_placeholder: "ملاحظات ل {classText}...", save_notes_button: "حفظ الملاحظات", saving: "جاري الحفظ...", saved: "تم الحفظ", saving_notes_for: "جاري حفظ الملاحظات ل {class} أسبوع {week}", notes_saved_success: "تم حفظ الملاحظات ل {class}، أسبوع {week}.", error_saving_notes: "خطأ في حفظ الملاحظات: {error}", display_incomplete: "إظهار غير المكتمل", hide_incomplete: "إخفاء غير المكتمل", incomplete_teachers_title: "المعلمون غير المكتملين (الأعمال)", loading: "جاري التحميل...", no_data: "لا توجد بيانات.", all_complete: "الكل مكتمل!", error_config_columns: "خطأ في إعداد الأعمدة.", welcome_user: "مرحباً {user}! يرجى اختيار أسبوع.", connected_as: "متصل: {user}", loading_data_week: "جاري تحميل بيانات الأسبوع {week}...", data_loaded_week: "تم تحميل بيانات الأسبوع {week}.", no_data_found_week: "لم يتم العثور على بيانات للأسبوع {week}.", error_loading_week: "خطأ في تحميل الأسبوع {week}: {error}", select_week_to_display: "يرجى اختيار أسبوع لعرض البيانات.", error_structure: "خطأ: هيكل البيانات غير محدد.", no_data_to_display_filters: "لا توجد بيانات لعرضها مع الفلاتر الحالية.", save_row_title: "حفظ هذا السطر", invalid_row: "سطر غير صالح.", error_saving_row: "خطأ في حفظ السطر: {error}", no_rows_to_save: "لا توجد أسطر معروضة للحفظ.", confirm_save_all: "تأكيد حفظ {count} أسطر معروضة للأسبوع {week}؟", save_all_cancelled: "تم إلغاء الحفظ.", saving_all_displayed: "جاري حفظ {count} أسطر...", save_all_success: "تم حفظ {count} أسطر بنجاح.", save_all_partial: "اكتمل الحفظ: {success} نجاح، {error} أخطاء.", generating_word: "جاري إنشاء {count} مستند (مستندات) وورد...", generating_word_success: "تم إنشاء {count} مستند (مستندات) وورد.", generating_word_partial: "اكتمل إنشاء الوورد: {ok} نجاح، {err} أخطاء.", generating_word_failed: "فشل إنشاء الوورد ({err} أخطاء).", generating_excel: "جاري إنشاء ملف اكسل للأسبوع {week}...", generating_excel_success: "تم إنشاء ملف اكسل '{filename}'.", error_generating_excel: "خطأ في إنشاء اكسل: {error}", no_file_selected: "لم يتم اختيار ملف.", reading_file: "قراءة الملف {fileName}...", file_read_success: "تمت قراءة الملف {fileName} ({count} أسطر).", file_error: "خطأ في قراءة الملف: {error}", invalid_file_type: "نوع الملف غير صالح (مطلوب .xlsx أو .xls).", saving_uploaded_data: "جاري حفظ البيانات المحملة للأسبوع {week}...", uploaded_data_saved: "تم حفظ البيانات المحملة للأسبوع {week}.", uploaded_data_error: "خطأ في حفظ البيانات المحملة: {error}", no_word_dates: "توليد وورد: التواريخ مفقودة على الخادم للأسبوع {week}.",
+                generate_ai_lesson_plan_button: "خطة الدرس (AI)", generating_ai_lesson_plan: "جاري إنشاء خطة الدرس بالذكاء الاصطناعي...", error_generating_ai_lesson_plan: "خطأ في إنشاء خطة الدرس بالذكاء الاصطناعي: {error}", ai_lesson_plan_generated: "تم إنشاء خطة الدرس بالذكاء الاصطناعي.",
+                // ===== NOUVELLES TRADUCTIONS =====
+                admin_report_class_label: "اختر فصل:",
+                generate_full_report_button: "إنشاء تقرير كامل حسب الفصل",
+                loading_classes: "-- جاري تحميل الفصول --",
+                select_report_class: "-- اختر فصل للتقرير --",
+                no_classes_found: "-- لم يتم العثور على فصول --",
+                generating_full_report: "جاري إنشاء التقرير الكامل للفصل {classe}...",
+                generating_full_report_success: "تم إنشاء التقرير الكامل للفصل {classe}.",
+                generating_full_report_error: "خطأ في إنشاء التقرير للفصل {classe}: {error}",
+                please_select_class_for_report: "يرجى اختيار فصل لإنشاء التقرير."
+            },
+            en: { 
+                login_title: "Login", login_username_label: "Username (Teacher):", login_password_label: "Password (same as Name):", login_button_text: "Login", remember_me: "Remember me", logout_button: "Logout", main_page_title: "Weekly Plans", week_label: "Week:", select_week: "-- Select a week --", please_select_week: "Please select a week.", admin_actions_title: "Administrator Actions", admin_excel_label: "Excel File:", admin_save_button: "Load and Save to DB", generate_word_button: "Generate Word by Class", generate_excel_button: "Generate Excel (1 File)", save_all_button: "Save Displayed Rows", filter_teacher_label: "Teacher:", filter_class_label: "Class:", filter_material_label: "Subject:", filter_period_label: "Period:", filter_day_label: "Day:", all: "All", all_f: "All", day_sun: "Sunday", day_mon: "Monday", day_tue: "Tuesday", day_wed: "Wednesday", day_thu: "Thursday", days: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], fullDays: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"], headers: { 'Leçon': 'Lesson', 'Travaux de classe': 'Classwork', 'Support': 'Support', 'Devoirs': 'Homework', 'Enseignant': 'Teacher', 'Classe': 'Class', 'Matière': 'Subject', 'Période': 'Period', 'Jour': 'Day' }, actions: "Actions", updated_at: "Updated At", notes_for_class: "Notes for class:", select_class: "-- Select a class --", select_class_placeholder: "Select a class to view or add notes...", notes_placeholder: "Notes for {classText}...", save_notes_button: "Save Notes", saving: "Saving...", saved: "Saved", saving_notes_for: "Saving notes for {class} W{week}", notes_saved_success: "Notes saved for {class}, W{week}.", error_saving_notes: "Error saving notes: {error}", display_incomplete: "Show Incomplete", hide_incomplete: "Hide Incomplete", incomplete_teachers_title: "Incomplete Teachers (Classwork)", loading: "Loading...", no_data: "No data.", all_complete: "All complete!", error_config_columns: "Column config error.", welcome_user: "Welcome {user}! Please select a week.", connected_as: "Connected: {user}", loading_data_week: "Loading data W{week}...", data_loaded_week: "Data W{week} loaded.", no_data_found_week: "No data found for W{week}.", error_loading_week: "Error loading W{week}: {error}", select_week_to_display: "Please select a week to display data.", error_structure: "Error: Data structure undefined.", no_data_to_display_filters: "No data to display with current filters.", save_row_title: "Save this row", invalid_row: "Invalid row.", error_saving_row: "Error saving row: {error}", no_rows_to_save: "No displayed rows to save.", confirm_save_all: "Confirm saving the {count} displayed rows for W{week}?", save_all_cancelled: "Save cancelled.", saving_all_displayed: "Saving {count} rows...", save_all_success: "{count} rows saved successfully.", save_all_partial: "Save complete: {success} success, {error} errors.", generating_word: "Generating {count} Word document(s)...", generating_word_success: "{count} Word document(s) generated.", generating_word_partial: "Word generation complete: {ok} success, {err} errors.", generating_word_failed: "Word generation failed ({err} errors).", generating_excel: "Generating Excel file W{week}...", generating_excel_success: "Excel file '{filename}' generated.", error_generating_excel: "Error generating Excel: {error}", no_file_selected: "No file selected.", reading_file: "Reading file {fileName}...", file_read_success: "File {fileName} read ({count} rows).", file_error: "Error reading file: {error}", invalid_file_type: "Invalid file type (requires .xlsx or .xls).", saving_uploaded_data: "Saving uploaded data for W{week}...", uploaded_data_saved: "Uploaded data saved for W{week}.", uploaded_data_error: "Error saving uploaded data: {error}", no_word_dates: "Word generation: Server-side dates missing for week W{week}.",
+                generate_ai_lesson_plan_button: "Lesson Plan (AI)", generating_ai_lesson_plan: "Generating AI lesson plan...", error_generating_ai_lesson_plan: "Error generating AI lesson plan: {error}", ai_lesson_plan_generated: "AI lesson plan generated.",
+                // ===== NEW TRANSLATIONS =====
+                admin_report_class_label: "Choose a Class:",
+                generate_full_report_button: "Generate Full Report by Class",
+                loading_classes: "-- Loading classes --",
+                select_report_class: "-- Select a class for the report --",
+                no_classes_found: "-- No classes found --",
+                generating_full_report: "Generating full report for class {classe}...",
+                generating_full_report_success: "Full report for {classe} generated.",
+                generating_full_report_error: "Error generating report for {classe}: {error}",
+                please_select_class_for_report: "Please select a class to generate the report."
+            }
+        };
+        const t = (key, params = {}) => { let text = translations[currentUserLanguage]?.[key] || translations.fr[key] || key; for (const p in params) { text = text.replace(`{${p}}`, params[p]); } return text; };
+
+        // Ordre/Traductions Classes (inchangées)
+        const classOrder = ["PEI1", "PEI2", "PEI3", "PEI4", "PEI5", "DP1", "DP2"];
+        const classTranslations = { 'PEI1':'السادس', 'PEI2':'الاول متوسط', 'PEI3':'الثاني متوسط', 'PEI4':'الثالث متوسط', 'PEI5':'الأول ثانوي', 'DP1':'الثاني ثانوي', 'DP2':'الثالث ثانوي' };
+        function compareClasses(a, b) { const indexA = classOrder.indexOf(a); const indexB = classOrder.indexOf(b); if (indexA !== -1 && indexB !== -1) return indexA - indexB; if (indexA !== -1) return -1; if (indexB !== -1) return 1; return String(a).localeCompare(String(b)); }
+
+        // ===== MODIFICATION AJOUTÉE : DATES CLIENT MISES À JOUR =====
+        const specificWeekDateRanges = {
+  1:{start:'2024-08-25',end:'2024-08-29'}, 2:{start:'2024-09-01',end:'2024-09-05'},
+  3:{start:'2024-09-08',end:'2024-09-12'}, 4:{start:'2024-09-15',end:'2024-09-19'},
+  5:{start:'2024-09-22',end:'2024-09-26'}, 6:{start:'2024-09-29',end:'2024-10-03'},
+  7:{start:'2024-10-06',end:'2024-10-10'}, 8:{start:'2024-10-13',end:'2024-10-17'},
+  9:{start:'2024-10-20',end:'2024-10-24'}, 10:{start:'2024-10-27',end:'2024-10-31'},
+  11:{start:'2024-11-03',end:'2024-11-07'}, 12:{start:'2024-11-10',end:'2024-11-14'},
+  13:{start:'2024-11-17',end:'2024-11-21'}, 14:{start:'2024-11-24',end:'2024-11-28'},
+  15:{start:'2024-12-01',end:'2024-12-05'}, 16:{start:'2024-12-08',end:'2024-12-12'},
+  17:{start:'2024-12-15',end:'2024-12-19'}, 18:{start:'2024-12-22',end:'2024-12-26'},
+  19:{start:'2024-12-29',end:'2025-01-02'}, 20:{start:'2025-01-05',end:'2025-01-09'},
+  21:{start:'2025-01-12',end:'2025-01-16'}, 22:{start:'2025-01-19',end:'2025-01-23'},
+  23:{start:'2025-01-26',end:'2025-01-30'}, 24:{start:'2025-02-02',end:'2025-02-06'},
+  25:{start:'2025-02-09',end:'2025-02-13'}, 26:{start:'2025-02-16',end:'2025-02-20'},
+  27:{start:'2025-02-23',end:'2025-02-27'}, 28:{start:'2025-03-02',end:'2025-03-06'},
+  29:{start:'2025-03-09',end:'2025-03-13'}, 30:{start:'2025-03-16',end:'2025-03-20'},
+  31:{start:'2025-03-23',end:'2025-03-27'}, 32:{start:'2025-03-30',end:'2025-04-03'},
+  33:{start:'2025-04-06',end:'2025-04-10'}, 34:{start:'2025-04-13',end:'2025-04-17'},
+  35:{start:'2025-04-20',end:'2025-04-24'}, 36:{start:'2025-04-27',end:'2025-05-01'},
+  37:{start:'2025-05-04',end:'2025-05-08'}, 38:{start:'2025-05-11',end:'2025-05-15'},
+  39:{start:'2025-05-18',end:'2025-05-22'}, 40:{start:'2025-05-25',end:'2025-05-29'},
+  41:{start:'2025-06-01',end:'2025-06-05'}, 42:{start:'2025-06-08',end:'2025-06-12'},
+  43:{start:'2025-06-15',end:'2025-06-19'}, 44:{start:'2025-06-22',end:'2025-06-26'},
+  45:{start:'2025-06-29',end:'2025-07-03'}, 46:{start:'2025-07-06',end:'2025-07-10'},
+  47:{start:'2025-07-13',end:'2025-07-17'}, 48:{start:'2025-07-20',end:'2025-07-24'}
+};
+        // ===== FIN MODIFICATION DATES CLIENT =====
+
+        // --- Utilitaires (inchangés) ---
+        function showProgressBar() { document.getElementById('progress-bar-container').style.display='block'; document.getElementById('progress-bar').style.width='0%'; document.getElementById('progress-bar').textContent='0%'; }
+        function updateProgressBar(p) { const clampedP = Math.min(100, Math.max(0, p)); document.getElementById('progress-bar').style.width=clampedP+'%'; document.getElementById('progress-bar').textContent=clampedP+'%'; }
+        function hideProgressBar() { setTimeout(() => { document.getElementById('progress-bar-container').style.display='none'; }, 500); }
+        function displayAlert(msgKey, isErr = false, params = {}) { if (!msgKey) { const div=document.getElementById('message-alerte'); div.style.display='none'; div.textContent=''; div.className=''; if(alertTimeoutId) clearTimeout(alertTimeoutId); alertTimeoutId = null; return; } const msg = t(msgKey, params); console.log(`Alert:${isErr?'ERR':'OK'}-${msg}`); const div=document.getElementById('message-alerte'); div.textContent=msg; div.className = isErr ? 'alert-error' : (msgKey.includes('warn') || msgKey.includes('partial') ? 'alert-warning' : 'alert-success'); div.classList.add('message-alert-base'); div.style.display='block'; if(alertTimeoutId) clearTimeout(alertTimeoutId); alertTimeoutId=setTimeout(()=>{ if(div.textContent===msg){div.style.display='none'; div.textContent=''; div.className='';} alertTimeoutId=null; }, isErr ? 8000 : 5000); }
+        function setButtonLoading(btnId, isLoading, iconClass) { const btn=document.getElementById(btnId); if(!btn) return; btn.disabled=isLoading; const icon=btn.querySelector('i'); if(icon) icon.className=isLoading ? 'fas fa-spinner fa-spin' : iconClass; }
+        function formatDateForDisplay(d) { if (!d || isNaN(d.getTime())) return "Invalid Date"; const days = translations[currentUserLanguage].fullDays || translations.fr.fullDays; const months = translations[currentUserLanguage].months || translations.fr.months; const dayName = days[d.getUTCDay()]; const dayOfMonth = String(d.getUTCDate()).padStart(2, '0'); const monthName = months[d.getUTCMonth()]; const year = d.getUTCFullYear(); if (currentUserLanguage === 'en') { return `${dayName}, ${monthName} ${dayOfMonth}, ${year}`; } else { return `${dayName} ${dayOfMonth} ${monthName} ${year}`; } }
+        const findHKey = (targetHeader) => { if (!headers || headers.length === 0 || !targetHeader) return null; const targetLower = targetHeader.trim().toLowerCase(); return headers.find(h => h?.trim().toLowerCase() === targetLower); };
+        function getDateForDayName(dayNameFrench) { if(!weekStartDate || isNaN(weekStartDate.getTime())) return null; const dayMapFr = {"Dimanche":0, "Lundi":1, "Mardi":2, "Mercredi":3, "Jeudi":4}; const offset = dayMapFr[dayNameFrench]; if(offset === undefined) return null; const dt = new Date(Date.UTC(weekStartDate.getUTCFullYear(), weekStartDate.getUTCMonth(), weekStartDate.getUTCDate())); dt.setUTCDate(dt.getUTCDate() + offset); return dt; }
+        function formatUpdatedAt(dS) { if(!dS) return ''; try{const d=new Date(dS); if(isNaN(d.getTime())) return ''; return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; } catch(e){return '';} }
+
+        // --- Fonctions Admin (inchangées) ---
+        function handleFileUpload(event) { const file = event.target.files[0]; const statusSpan = document.getElementById('file-upload-status'); const saveBtn = document.getElementById('saveUploadedDataBtn'); uploadedPlanData = null; saveBtn.disabled = true; statusSpan.textContent = ''; if (!file) { statusSpan.textContent = t('no_file_selected'); return; } console.log(`[Admin Upload] Fichier: ${file.name}`); statusSpan.textContent = t('reading_file', { fileName: file.name }); if (!/\.(xlsx|xls)$/i.test(file.name)) { displayAlert("invalid_file_type", true); statusSpan.textContent = "Type invalide."; event.target.value = ''; return; } const reader = new FileReader(); reader.onload = function(e) { try { const data = e.target.result; const workbook = XLSX.read(data, { type: 'array' }); const firstSheetName = workbook.SheetNames[0]; const worksheet = workbook.Sheets[firstSheetName]; const jsonDataRaw = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: null, raw: false }); if (!jsonDataRaw || jsonDataRaw.length < 1) throw new Error("Feuille Excel vide."); const headersRaw = jsonDataRaw[0]; if (!headersRaw || !Array.isArray(headersRaw) || headersRaw.length === 0) throw new Error("En-têtes non trouvés."); const extractedHeaders = headersRaw.map(h => h ? String(h).trim().replace(/\s+/g, ' ') : null).filter(Boolean); if (extractedHeaders.length === 0) throw new Error("Aucun en-tête valide."); const dataRows = jsonDataRaw.slice(1); uploadedPlanData = dataRows.map((row) => { if (!Array.isArray(row)) return null; const obj = {}; extractedHeaders.forEach((header, index) => { obj[header] = (row && index < row.length) ? row[index] : null; }); return Object.values(obj).some(val => val != null && String(val).trim() !== '') ? obj : null; }).filter(Boolean); console.log(`[Admin Upload] ${uploadedPlanData.length} lignes extraites.`); statusSpan.textContent = t('file_read_success', { count: uploadedPlanData.length }).replace(file.name, ''); displayAlert('file_read_success', false, { fileName: file.name, count: uploadedPlanData.length }); saveBtn.disabled = false; } catch (error) { console.error("Erreur lecture Excel:", error); displayAlert('file_error', true, { error: error.message }); statusSpan.textContent = t('file_error', { error: '' }).replace(': {error}', '.'); uploadedPlanData = null; saveBtn.disabled = true; event.target.value = ''; } }; reader.onerror = function(e) { console.error("Erreur FileReader:", e); displayAlert('file_error', true, { error: "Erreur FileReader" }); statusSpan.textContent = t('file_error', { error: '' }).replace(': {error}', '.'); uploadedPlanData = null; saveBtn.disabled = true; event.target.value = ''; }; reader.readAsArrayBuffer(file); }
+        async function saveUploadedData() { const weekSelect = document.getElementById('weekSelector'); const selectedWeek = weekSelect.value; const statusSpan = document.getElementById('file-upload-status'); if (!selectedWeek) { displayAlert("please_select_week", true); return; } if (!uploadedPlanData || uploadedPlanData.length === 0) { displayAlert("no_data_to_save", true); return; } console.log(`[Admin Save] Enregistrement ${uploadedPlanData.length} lignes S${selectedWeek}.`); displayAlert('saving_uploaded_data', false, { week: selectedWeek }); setButtonLoading('saveUploadedDataBtn', true, 'fas fa-database'); showProgressBar(); updateProgressBar(10); try { const response = await fetch('/save-plan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ week: selectedWeek, data: uploadedPlanData }) }); updateProgressBar(80); const result = await response.json(); if (!response.ok) throw new Error(result.message || `Erreur serveur ${response.status}`); updateProgressBar(100); displayAlert('uploaded_data_saved', false, { week: selectedWeek }); statusSpan.textContent = t('saved'); uploadedPlanData = null; document.getElementById('excelFileInput').value = ''; document.getElementById('saveUploadedDataBtn').disabled = true; if (selectedWeek === currentWeek) { console.log("[Admin Save] Rechargement..."); await loadPlanForWeek(); } else { displayAlert(`Données S${selectedWeek} OK. ${t('select_week_to_display').replace('les données', `S${selectedWeek}`)}`, false); } } catch (error) { console.error("Erreur enregistrement upload:", error); displayAlert('uploaded_data_error', true, { error: error.message }); statusSpan.textContent = t('error_saving_notes', { error: '' }).replace(': {error}', '.'); updateProgressBar(0); } finally { hideProgressBar(); setButtonLoading('saveUploadedDataBtn', false, 'fas fa-database'); } }
+        
+        // ===== NOUVELLE FONCTION : Peupler le sélecteur de classe pour le rapport admin =====
+        async function populateAdminReportClassSelector() {
+            const select = document.getElementById('adminReportClassSelector');
+            if (!select) return;
+
+            select.innerHTML = `<option value="">${t('loading_classes')}</option>`;
+            select.disabled = true;
+
+            try {
+                const response = await fetch('/api/all-classes');
+                if (!response.ok) throw new Error(`Erreur serveur ${response.status}`);
+                const classes = await response.json();
+
+                if (classes && classes.length > 0) {
+                    select.innerHTML = `<option value="">${t('select_report_class')}</option>`;
+                    classes.sort(compareClasses).forEach(cls => {
+                        const opt = document.createElement('option');
+                        opt.value = cls;
+                        const ar = classTranslations[cls];
+                        opt.textContent = ar ? `${ar} (${cls})` : cls;
+                        select.appendChild(opt);
+                    });
+                    select.disabled = false;
+                } else {
+                    select.innerHTML = `<option value="">${t('no_classes_found')}</option>`;
+                }
+            } catch (error) {
+                console.error("Erreur chargement des classes pour le rapport:", error);
+                select.innerHTML = `<option value="">Erreur chargement</option>`;
+                displayAlert('error', true, { error: 'Erreur chargement des classes.' });
+            }
+        }
+        
+        // ===== NOUVELLE FONCTION : Générer le rapport Excel complet par classe =====
+        async function generateFullReportByClass() {
+            const classSelector = document.getElementById('adminReportClassSelector');
+            const selectedClass = classSelector.value;
+
+            if (!selectedClass) {
+                displayAlert('please_select_class_for_report', true);
+                return;
+            }
+
+            console.log(`Demande de rapport complet pour la classe : ${selectedClass}`);
+            displayAlert('generating_full_report', false, { classe: selectedClass });
+            setButtonLoading('generateFullReportBtn', true, 'fas fa-file-invoice');
+            showProgressBar();
+            updateProgressBar(10);
+
+            try {
+                const response = await fetch('/api/full-report-by-class', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ classe: selectedClass })
+                });
+
+                updateProgressBar(80);
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const contentDisposition = response.headers.get('content-disposition');
+                    let filename = `Rapport_Complet_${selectedClass}.xlsx`; // Nom par défaut
+                    if (contentDisposition) {
+                        const filenameMatch = contentDisposition.match(/filename="?(.+?)"?(;|$)/i);
+                        if (filenameMatch && filenameMatch[1]) {
+                            filename = filenameMatch[1];
+                        }
+                    }
+                    saveAs(blob, filename); // Utilise FileSaver.js
+                    updateProgressBar(100);
+                    displayAlert('generating_full_report_success', false, { classe: selectedClass });
+                } else {
+                    const errorResult = await response.json().catch(() => ({ message: "Erreur inconnue du serveur." }));
+                    throw new Error(errorResult.message || `Erreur serveur ${response.status}`);
+                }
+
+            } catch (error) {
+                console.error('Erreur lors de la génération du rapport complet:', error);
+                displayAlert('generating_full_report_error', true, { classe: selectedClass, error: error.message });
+                updateProgressBar(0);
+            } finally {
+                hideProgressBar();
+                setButtonLoading('generateFullReportBtn', false, 'fas fa-file-invoice');
+            }
+        }
+
+
+        // --- Notes par Classe ---
+        function populateNotesClassSelector() { const sel = document.getElementById('notesClassSelector'); const txt = document.getElementById('notesInput'); const btn = document.getElementById('saveNotesBtn'); sel.innerHTML = `<option value="">${t('select_class')}</option>`; const clsK = findHKey('Classe'); if (!clsK || !planData || planData.length === 0) { txt.disabled = true; btn.disabled = true; txt.placeholder = t('no_data'); return; } const uniqueCls = [...new Set(planData.map(i => i[clsK]).filter(Boolean))].sort(compareClasses); uniqueCls.forEach(cls => { const opt = document.createElement('option'); opt.value = cls; const ar = classTranslations[cls]; opt.textContent = ar ? `${ar} (${cls})` : cls; sel.appendChild(opt); }); txt.value = ''; txt.disabled = true; btn.disabled = true; txt.placeholder = t('select_class_placeholder'); }
+        function displayClassNotes() { const sel=document.getElementById('notesClassSelector'); const txt=document.getElementById('notesInput'); const btn=document.getElementById('saveNotesBtn'); const selCls=sel.value; if(selCls && weeklyClassNotes) { const note=weeklyClassNotes[selCls]; txt.value=note||''; txt.disabled=false; btn.disabled=false; const selText = sel.options[sel.selectedIndex].text; txt.placeholder = t('notes_placeholder', { classText: selText }); } else { txt.value=''; txt.disabled=true; btn.disabled=true; txt.placeholder=selCls ? t('no_data') : t('select_class_placeholder'); } document.getElementById('notes-save-status').textContent=''; }
+        async function saveNotes() { const statusEl=document.getElementById('notes-save-status'); const classSel=document.getElementById('notesClassSelector'); const selCls=classSel.value; if(!selCls){displayAlert("select_class",true); return;} if(!currentWeek){displayAlert("please_select_week",true); return;} statusEl.textContent = t('saving'); displayAlert(''); setButtonLoading('saveNotesBtn',true,'fas fa-save'); const notesVal=document.getElementById('notesInput').value; console.log(t('saving_notes_for', { class: selCls, week: currentWeek })); try{ const response=await fetch('/save-notes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({week:currentWeek,classe:selCls,notes:notesVal})}); const result=await response.json(); if(!response.ok){throw new Error(result.message||`Erreur ${response.status}`);} weeklyClassNotes[selCls]=notesVal; displayAlert('notes_saved_success', false, { class: selCls, week: currentWeek }); statusEl.textContent = t('saved'); setTimeout(()=>{statusEl.textContent='';},3000); } catch(error){ console.error('Err saveNotes:',error); displayAlert('error_saving_notes', true, { error: error.message }); statusEl.textContent=`${t('error_saving_notes',{error:''}).replace(': {error}','')}: ${error.message}`; } finally{setButtonLoading('saveNotesBtn',false,'fas fa-save');} }
+
+        // --- Enseignants Incomplets (inchangées) ---
+        function checkAndDisplayIncompleteTeachers() { console.log("checkIncomplete"); incompleteTeachersInfo={}; const list=document.getElementById('incompleteList'); list.innerHTML=''; if(!planData||planData.length===0){list.innerHTML=`<li>${t('no_data')}</li>`; return;} const teacherKey=findHKey('Enseignant'); const classKey=findHKey('Classe'); const taskKey=findHKey('Travaux de classe'); if(!teacherKey||!classKey||!taskKey){console.warn("Manque cols Ens/Cls/Travaux"); list.innerHTML=`<li>${t('error_config_columns')}</li>`; return;} planData.forEach(item=>{const teacher=item[teacherKey]; const taskVal=item[taskKey]; const clsName=item[classKey]; if(teacher&&clsName&&(taskVal==null||String(taskVal).trim()==='')){if(!incompleteTeachersInfo[teacher]){incompleteTeachersInfo[teacher]=new Set();} incompleteTeachersInfo[teacher].add(clsName);}}); const teachers=Object.keys(incompleteTeachersInfo); if(teachers.length===0){list.innerHTML=`<li>${t('all_complete')}</li>`;} else { teachers.sort().forEach(teacher=>{ const classes=[...incompleteTeachersInfo[teacher]].sort().join(', '); const li=document.createElement('li'); li.innerHTML = `<span class="incomplete-teacher-name">${teacher}</span> (<span class="incomplete-class-list">${classes}</span>)`; list.appendChild(li); }); } }
+        function toggleIncompleteList() { const listDiv=document.getElementById('incompleteTeachersDisplay'); const btn=document.getElementById('toggleIncompleteBtn'); const btnTextSpan = btn.querySelector('.btn-text'); if(listDiv.style.display==='none'||listDiv.style.display===''){ listDiv.style.display='block'; btn.querySelector('i').className = 'fas fa-xmark'; if(btnTextSpan) btnTextSpan.textContent = t('hide_incomplete'); } else { listDiv.style.display='none'; btn.querySelector('i').className = 'fas fa-list-check'; if(btnTextSpan) btnTextSpan.textContent = t('display_incomplete'); } }
+
+        // --- Fonctions Principales (inchangées, mais utilise dates client màj) ---
+        async function fetchPlanData(week) { if (!week || isNaN(parseInt(week, 10))) { console.warn("fetchPlanData sans semaine valide."); displayPlanTable([]); document.getElementById('weekDateRange').textContent = t('please_select_week'); return; } if (!loggedInUser) { console.warn("Tentative chargement non connecté."); displayAlert("login_title", true); return; } console.log(`fetchPlanData S${week} pour ${loggedInUser}`); displayAlert('loading_data_week', false, { week: week }); showProgressBar(); updateProgressBar(10); currentWeek = week; const weekNum=parseInt(week,10); const dateRangeEl=document.getElementById('weekDateRange'); weekStartDate=null; planData=[]; headers=[]; weeklyClassNotes={}; dateRangeEl.textContent=`${t('week_label')} ${week}: ${t('loading')}`; displayPlanTable([]); updateActionButtonsState(false); const dates=specificWeekDateRanges[weekNum]; /* <-- Utilise dates client màj */ if(dates?.start&&dates?.end){try{const s=new Date(dates.start+'T00:00:00Z'); const e=new Date(dates.end+'T00:00:00Z'); if(!isNaN(s.getTime())&&!isNaN(e.getTime())){ weekStartDate=s; dateRangeEl.textContent = `${t('week_label')} ${week} : ${isArabicUser() ? 'من' : (currentUserLanguage === 'en' ? 'from' : 'du')} ${formatDateForDisplay(s)} ${isArabicUser() ? 'إلى' : (currentUserLanguage === 'en' ? 'to' : 'à')} ${formatDateForDisplay(e)}`;} else throw new Error();}catch(e){dateRangeEl.textContent=`S ${week} (Err dates)`; weekStartDate=null;}} else {dateRangeEl.textContent=`${t('week_label')} ${week} (${t('no_data')}: dates non définies)`; weekStartDate=null;} updateProgressBar(30); try{const r=await fetch(`/plans/${week}`); updateProgressBar(70); if(!r.ok){const d=await r.json().catch(()=>null); throw new Error(d?.message || `Err ${r.status}`);} const fetched=await r.json(); if(fetched&&typeof fetched==='object'){planData=fetched.planData||[]; weeklyClassNotes=fetched.classNotes||{};} else {planData=[]; weeklyClassNotes={};} updateProgressBar(90); if(planData.length>0){headers=Object.keys(planData[0]).filter(h=>h!=='_id'&&h!=='id'); displayAlert('data_loaded_week', false, { week: week });} else {headers=[]; displayAlert('no_data_found_week', false, { week: week });} createTableHeader(); populateFilterOptions(); populateNotesClassSelector(); sortAndDisplay(); displayClassNotes(); checkAndDisplayIncompleteTeachers(); updateActionButtonsState(planData.length > 0); updateProgressBar(100); } catch(e){ console.error("Err fetchPlanData:",e); displayAlert('error_loading_week', true, { week: week, error: e.message }); planData=[]; headers=[]; weeklyClassNotes={}; createTableHeader(); populateFilterOptions(); populateNotesClassSelector(); sortAndDisplay(); displayClassNotes(); checkAndDisplayIncompleteTeachers(); updateProgressBar(0); updateActionButtonsState(false); } finally{hideProgressBar();} }
+        function createTableHeader() { const tHead = document.querySelector('#planTable thead tr'); tHead.innerHTML = ''; const curH = headers || []; const hDisp = curH.filter(h => h !== '_id' && h !== 'id' && h.toLowerCase() !== 'updatedat'); const headerTranslations = translations[currentUserLanguage].headers || translations.fr.headers; const leconKey = findHKey('Leçon'); const supportKey = findHKey('Support'); if (hDisp.length > 0) { hDisp.forEach(h => { if (loggedInUser && teachersToHideColumnsFor.has(loggedInUser) && (h === leconKey || h === supportKey)) { return; } const th = document.createElement('th'); th.textContent = headerTranslations[h] || h; tHead.appendChild(th); }); const actTh = document.createElement('th'); actTh.textContent = t('actions'); actTh.classList.add('actions-column'); tHead.appendChild(actTh); if (curH.some(h => h.toLowerCase() === 'updatedat')) { const updTh = document.createElement('th'); updTh.textContent = t('updated_at'); updTh.classList.add('updated-at-column'); tHead.appendChild(updTh); } } const tBody = document.querySelector('#planTable tbody'); tBody.innerHTML = ''; }
+        function updateFilterOptionDefaultTexts() { const filters = [ { selId: 'filterEnseignant', defaultKey: 'all' }, { selId: 'filterClasse', defaultKey: 'all_f' }, { selId: 'filterMatiere', defaultKey: 'all_f' }, { selId: 'filterPeriode', defaultKey: 'all_f' }, { selId: 'filterJour', defaultKey: 'all' }, { selId: 'weekSelector', defaultKey: 'select_week' }, { selId: 'notesClassSelector', defaultKey: 'select_class' } ]; filters.forEach(f => { const select = document.getElementById(f.selId); if (select) { const defaultOption = select.querySelector('option[value=""]'); if (defaultOption) { defaultOption.textContent = t(f.defaultKey); } } }); const jSel = document.getElementById('filterJour'); if (jSel) { const dayOptions = jSel.querySelectorAll('option'); const dayValues = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi"]; const dayTransKeys = ["day_sun", "day_mon", "day_tue", "day_wed", "day_thu"]; dayOptions.forEach(opt => { if (opt.value !== "") { const idx = dayValues.indexOf(opt.value); if (idx !== -1) opt.textContent = t(dayTransKeys[idx]); } }); } const weekSel = document.getElementById('weekSelector'); if (weekSel) { const weekOptions = weekSel.querySelectorAll('option'); weekOptions.forEach(opt => { if (opt.value && opt.value.match(/^\d+$/)) { const weekLabel = t('week_label'); opt.textContent = `${weekLabel.replace(':', '')} ${opt.value}`; } }); } }
+        function populateFilterOptions() { const data = planData || []; const getUniq = (k) => { const uniq = new Set(); data.forEach(i => { if (i && i[k] != null && i[k] !== '') { uniq.add(i[k]); } }); if (k?.trim().toLowerCase() === 'classe') { return [...uniq].sort(compareClasses); } else { return [...uniq].sort((a, b) => String(a).localeCompare(String(b))); } }; const ensK = findHKey('Enseignant'); const clsK = findHKey('Classe'); const perK = findHKey('Période'); const matK = findHKey('Matière'); const ens = ensK ? getUniq(ensK) : []; const cls = clsK ? getUniq(clsK) : []; const per = perK ? getUniq(perK) : []; const mat = matK ? getUniq(matK) : []; const updateSel = (id, opts, isCls = false) => { const sel = document.getElementById(id); const curV = sel.value; const defaultOptHTML = sel.querySelector('option[value=""]')?.outerHTML || `<option value="">${t(isCls ? 'all_f' : 'all')}</option>`; sel.innerHTML = defaultOptHTML; opts.forEach(o => { const opt = document.createElement('option'); opt.value = o; if (isCls) { const ar = classTranslations[o]; opt.textContent = ar ? `${ar} (${o})` : o; } else { opt.textContent = o; } sel.appendChild(opt); }); if (opts.includes(curV)) { sel.value = curV; } else { sel.value = ""; } }; updateSel('filterEnseignant', ens); updateSel('filterClasse', cls, true); updateSel('filterPeriode', per); updateSel('filterMatiere', mat); updateFilterOptionDefaultTexts(); const filterEnsSelect = document.getElementById('filterEnseignant'); if (loggedInUser && loggedInUser !== 'Mohamed') { filterEnsSelect.value = loggedInUser; filterEnsSelect.disabled = true; } else { filterEnsSelect.disabled = false; } }
+        function sortAndDisplay() { const filterEnsSelect = document.getElementById('filterEnseignant'); if (loggedInUser && loggedInUser !== 'Mohamed') { filterEnsSelect.value = loggedInUser; filterEnsSelect.disabled = true; } else { filterEnsSelect.disabled = false; } const ensF = filterEnsSelect.value; const clsF = document.getElementById('filterClasse').value; const matF = document.getElementById('filterMatiere').value; const perF = document.getElementById('filterPeriode').value; const jF = document.getElementById('filterJour').value; const ensK = findHKey('Enseignant'); const clsK = findHKey('Classe'); const matK = findHKey('Matière'); const perK = findHKey('Période'); const jK = findHKey('Jour'); filteredAndSortedData = planData.filter(i => { if (!i) return false; const iE = ensK && i.hasOwnProperty(ensK) ? String(i[ensK]) : null; const iC = clsK && i.hasOwnProperty(clsK) ? String(i[clsK]) : null; const iM = matK && i.hasOwnProperty(matK) ? String(i[matK]) : null; const iP = perK && i.hasOwnProperty(perK) ? String(i[perK]) : null; const iJ = jK && i.hasOwnProperty(jK) ? String(i[jK]) : null; const pE = !ensF || iE === ensF; const pC = !clsF || iC === clsF; const pM = !matF || iM === matF; const pP = !perF || iP === perF; const pJ = !jF || iJ === jF; return pE && pC && pM && pP && pJ; }); const dayValuesFr = { "Dimanche": 1, "Lundi": 2, "Mardi": 3, "Mercredi": 4, "Jeudi": 5 }; filteredAndSortedData.sort((a, b) => { const classA = (clsK && a.hasOwnProperty(clsK)) ? a[clsK] : null; const classB = (clsK && b.hasOwnProperty(clsK)) ? b[clsK] : null; const classComp = compareClasses(classA, classB); if (classComp !== 0) return classComp; const jA_fr = (jK && a.hasOwnProperty(jK)) ? String(a[jK]) : null; const jB_fr = (jK && b.hasOwnProperty(jK)) ? String(b[jK]) : null; const dayOrdA = dayValuesFr[jA_fr] || 99; const dayOrdB = dayValuesFr[jB_fr] || 99; const dC = dayOrdA - dayOrdB; if (dC !== 0) return dC; const pA = (perK && a.hasOwnProperty(perK)) ? a[perK] : null; const pB = (perK && b.hasOwnProperty(perK)) ? b[perK] : null; const piA = parseInt(pA, 10); const piB = parseInt(pB, 10); if (!isNaN(piA) && !isNaN(piB)) { return piA - piB; } else { const sA = pA == null ? '' : String(pA); const sB = pB == null ? '' : String(pB); return sA.localeCompare(sB); } }); displayPlanTable(filteredAndSortedData); updateActionButtonsState(filteredAndSortedData.length > 0); }
+
+        // MODIFIED displayPlanTable
+        function displayPlanTable(data) {
+            const tBody = document.querySelector('#planTable tbody');
+            const tHead = document.querySelector('#planTable thead tr');
+            tBody.innerHTML = '';
+            const actualHdrCount = tHead ? tHead.querySelectorAll('th').length : 0;
+            const colspanVal = actualHdrCount > 0 ? actualHdrCount : 10;
+            const curH = headers || [];
+            const hDisp = curH.filter(h => h !== '_id' && h.toLowerCase() !== 'updatedat' && h !== 'id');
+            const jK = findHKey('Jour');
+            const clsK = findHKey('Classe');
+            const updK = findHKey('updatedAt');
+            const editHdrKeys = ['Leçon', 'Travaux de classe', 'Support', 'Devoirs'].map(k => findHKey(k)).filter(Boolean);
+            const leconKey = findHKey('Leçon');
+            const supportKey = findHKey('Support');
+
+            const initialRow = document.getElementById('initial-table-row');
+            if(initialRow) initialRow.remove();
+
+            if (!currentWeek) {
+                tBody.innerHTML = `<tr id="initial-table-row"><td colspan="${colspanVal}" class="table-message">${t('select_week_to_display')}</td></tr>`;
+                return;
+            }
+            if (curH.length === 0 && currentWeek) {
+                tBody.innerHTML = `<tr id="initial-table-row"><td colspan="${colspanVal}" class="table-message">${t('error_structure')}</td></tr>`;
+                return;
+            }
+            if (!data || data.length === 0) {
+                tBody.innerHTML = `<tr id="initial-table-row"><td colspan="${colspanVal}" class="table-message">${t('no_data_to_display_filters')}</td></tr>`;
+                return;
+            }
+
+            data.forEach((rowObj, rIdx) => {
+                const tr = document.createElement('tr');
+                tr.dataset.rowIndex = rIdx;
+                hDisp.forEach(header => {
+                    if (loggedInUser && teachersToHideColumnsFor.has(loggedInUser) && (header === leconKey || header === supportKey)) {
+                        return;
+                    }
+                    const td = document.createElement('td');
+                    let content = rowObj ? (rowObj[header] ?? '') : '';
+                    td.setAttribute('dir', 'auto');
+                    if (header === jK && content) {
+                        const dt = getDateForDayName(content);
+                        td.textContent = dt ? formatDateForDisplay(dt) : content;
+                    } else if (header === clsK && content) {
+                        const ar = classTranslations[content];
+                        td.textContent = ar ? `${ar} (${content})` : content;
+                    } else if (editHdrKeys.includes(header)) {
+                        td.contentEditable = true;
+                        td.classList.add('editable');
+                        td.textContent = content;
+                        td.spellcheck = true;
+                        td.addEventListener('input', (e) => {
+                            if (rowObj) {
+                                rowObj[header] = e.target.textContent;
+                            }
+                            const parentTR = e.target.closest('tr');
+                            if (parentTR) {
+                                parentTR.classList.add('modified');
+                                const indicator = parentTR.querySelector('.save-indicator');
+                                if (indicator) indicator.style.display = 'none';
+                            }
+                        });
+                    } else {
+                        td.textContent = content;
+                    }
+                    tr.appendChild(td);
+                });
+
+                const actTd = document.createElement('td');
+                actTd.classList.add('actions-column');
+
+                const saveBtn = document.createElement('button');
+                saveBtn.innerHTML = '<i class="fas fa-check"></i>';
+                saveBtn.title = t('save_row_title');
+                saveBtn.classList.add('save-row-button');
+                saveBtn.onclick = () => saveRow(rowObj, tr);
+                actTd.appendChild(saveBtn);
+
+                // NEW: AI Lesson Plan Button
+                const aiLessonBtn = document.createElement('button');
+                aiLessonBtn.innerHTML = '<i class="fas fa-robot"></i>';
+                aiLessonBtn.title = t('generate_ai_lesson_plan_button');
+                aiLessonBtn.classList.add('ai-lesson-plan-button', 'pro-button'); // Add 'pro-button' for styling
+                aiLessonBtn.style.marginLeft = '5px'; // Quick styling
+                aiLessonBtn.onclick = () => generateAILessonPlan(rowObj, tr);
+                actTd.appendChild(aiLessonBtn);
+
+                const indicatorSpan = document.createElement('span');
+                indicatorSpan.className = 'save-indicator';
+                indicatorSpan.innerHTML = '<i class="fas fa-check-circle"></i>';
+                indicatorSpan.style.display = rowObj && updK && rowObj[updK] ? 'inline-block' : 'none';
+                actTd.appendChild(indicatorSpan);
+
+                tr.appendChild(actTd);
+
+                if (updK && tHead && tHead.querySelector('.updated-at-column')) {
+                    const updTd = document.createElement('td');
+                    updTd.classList.add('updated-at-column');
+                    const updContent = rowObj && rowObj.hasOwnProperty(updK) ? (rowObj[updK] ?? '') : '';
+                    updTd.textContent = formatUpdatedAt(updContent);
+                    tr.appendChild(updTd);
+                }
+                tBody.appendChild(tr);
+            });
+        }
+
+        // NOUVELLE FONCTION : generateAILessonPlan
+        async function generateAILessonPlan(rowData, tableRowElement) {
+            if (!rowData || typeof rowData !== 'object') {
+                displayAlert('invalid_row', true);
+                return;
+            }
+            if (!currentWeek) {
+                displayAlert("please_select_week", true);
+                return;
+            }
+
+            console.log("Generating AI Lesson Plan for:", rowData);
+            displayAlert('generating_ai_lesson_plan', false);
+
+            const aiButton = tableRowElement?.querySelector('.ai-lesson-plan-button');
+            let originalButtonHtml = '';
+            let originalButtonDisabledState = false;
+            if (aiButton) {
+                originalButtonHtml = aiButton.innerHTML;
+                originalButtonDisabledState = aiButton.disabled;
+                aiButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                aiButton.disabled = true;
+            }
+
+            try {
+                const response = await fetch('/generate-ai-lesson-plan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ week: currentWeek, rowData: rowData })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const contentDisposition = response.headers.get('content-disposition');
+                    let filename = `plan_lecon_S${currentWeek}_AI_genere.xlsx`; // Default filename
+                    if (contentDisposition) {
+                        const filenameMatch = contentDisposition.match(/filename="?(.+?)"?(;|$)/i);
+                        if (filenameMatch && filenameMatch[1]) {
+                            filename = filenameMatch[1];
+                        }
+                    }
+                    saveAs(blob, filename); // FileSaver.js
+                    displayAlert('ai_lesson_plan_generated', false);
+                } else {
+                    const errorResult = await response.json().catch(() => ({ message: "Erreur inconnue du serveur lors de la génération du plan IA." }));
+                    throw new Error(errorResult.message || `Erreur serveur ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Error generating AI lesson plan:', error);
+                displayAlert('error_generating_ai_lesson_plan', true, { error: error.message });
+            } finally {
+                if (aiButton) {
+                    aiButton.innerHTML = originalButtonHtml;
+                    aiButton.disabled = originalButtonDisabledState;
+                }
+            }
+        }
+
+
+        function updateActionButtonsState(isEnabled) { document.getElementById('generateWordBtn').disabled = !isEnabled; document.getElementById('generateExcelBtn').disabled = !isEnabled; const saveAllBtn = document.getElementById('saveAllDisplayedBtn'); if (saveAllBtn) { saveAllBtn.disabled = !isEnabled || !filteredAndSortedData || filteredAndSortedData.length === 0; } }
+        async function saveRow(rowData, tableRowElement) { if(!rowData||typeof rowData!=='object'){displayAlert('invalid_row',true); return;} console.log("saveRow:",JSON.stringify(rowData).substring(0,100)+'...'); displayAlert(''); const btn=tableRowElement?.querySelector('.save-row-button'); const indicator=tableRowElement?.querySelector('.save-indicator'); const origBtnIcon = btn ? btn.querySelector('i')?.className || 'fas fa-check' : 'fas fa-check'; if(indicator) indicator.style.display='none'; if(btn){btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>'; btn.disabled=true;} try{ if(!currentWeek){throw new Error(t('please_select_week'));} const response=await fetch('/save-row',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({week:currentWeek,data:rowData})}); const result=await response.json(); if(!response.ok){throw new Error(result.message||`Erreur ${response.status}`);} if(tableRowElement){tableRowElement.classList.remove('modified');} if(indicator) indicator.style.display='inline-block'; if(result.updatedData?.updatedAt&&tableRowElement){ const updK=findHKey('updatedAt'); if(updK){ rowData[updK]=result.updatedData.updatedAt; const updCell=tableRowElement.querySelector('.updated-at-column'); if(updCell){updCell.textContent=formatUpdatedAt(result.updatedData.updatedAt);} } } } catch(e){ console.error('Erreur saveRow:',e); displayAlert('error_saving_row', true, { error: e.message }); if(indicator) indicator.style.display='none'; } finally{if(btn){btn.innerHTML=`<i class="${origBtnIcon}"></i>`; btn.disabled=false;} checkAndDisplayIncompleteTeachers();} }
+        async function saveAllDisplayedRows() { if (!filteredAndSortedData || filteredAndSortedData.length === 0) { displayAlert('no_rows_to_save', true); return; } if (!currentWeek) { displayAlert("please_select_week", true); return; } const totalRows = filteredAndSortedData.length; const confirmation = confirm(t('confirm_save_all', { count: totalRows, week: currentWeek })); if (!confirmation) { displayAlert('save_all_cancelled', false); return; } displayAlert('saving_all_displayed', false, { count: totalRows }); setButtonLoading('saveAllDisplayedBtn', true, 'fas fa-save'); showProgressBar(); updateProgressBar(0); let successCount = 0; let errorCount = 0; const tableBody = document.querySelector('#planTable tbody'); for (let i = 0; i < totalRows; i++) { const rowData = filteredAndSortedData[i]; const rowIndex = i; updateProgressBar(Math.round(((i + 1) / totalRows) * 95)); try { const response = await fetch('/save-row', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ week: currentWeek, data: rowData }) }); const result = await response.json(); if (!response.ok) { throw new Error(result.message || `Erreur ${response.status} L${rowIndex + 1}`); } successCount++; const tr = tableBody?.querySelector(`tr[data-row-index="${rowIndex}"]`); if (tr) { tr.classList.remove('modified'); const indicator = tr.querySelector('.save-indicator'); if (indicator) indicator.style.display = 'inline-block'; if (result.updatedData?.updatedAt) { const updK = findHKey('updatedAt'); if (updK) { rowData[updK] = result.updatedData.updatedAt; const updCell = tr.querySelector('.updated-at-column'); if (updCell) updCell.textContent = formatUpdatedAt(result.updatedData.updatedAt); } } } } catch (error) { console.error(`Err L${rowIndex + 1}:`, error); errorCount++; const tr = tableBody?.querySelector(`tr[data-row-index="${rowIndex}"]`); if(tr) { tr.style.backgroundColor = '#f8d7da'; tr.classList.add('modified'); const indicator = tr.querySelector('.save-indicator'); if(indicator) indicator.style.display = 'none'; } } } updateProgressBar(100); hideProgressBar(); setButtonLoading('saveAllDisplayedBtn', false, 'fas fa-save'); if (errorCount === 0) { displayAlert('save_all_success', false, { count: successCount }); } else { displayAlert('save_all_partial', true, { success: successCount, error: errorCount }); } checkAndDisplayIncompleteTeachers(); }
+        async function generateWordByClasse() { const dataGen = filteredAndSortedData; if(!dataGen || dataGen.length === 0){ displayAlert("no_data_to_display_filters", true); return; } if(!currentWeek){displayAlert("please_select_week",true); return;} setButtonLoading('generateWordBtn', true, 'fas fa-file-word'); const dataCls = {}; const clsK = findHKey('Classe'); if (!clsK) { displayAlert("error_config_columns", true); setButtonLoading('generateWordBtn', false, 'fas fa-file-word'); return; } dataGen.forEach(i => { if (!i || !i[clsK]) return; const cl = i[clsK]; if (!dataCls[cl]) { dataCls[cl] = []; } dataCls[cl].push(i); }); const clsGen = Object.keys(dataCls); if (clsGen.length === 0) { displayAlert("no_data", true); setButtonLoading('generateWordBtn', false, 'fas fa-file-word'); return; } displayAlert('generating_word', false, { count: clsGen.length }); showProgressBar(); updateProgressBar(0); let ok = 0, err = 0; const total = clsGen.length; for (let i = 0; i < total; i++) { const cl = clsGen[i]; const clData = dataCls[cl]; const clNote = weeklyClassNotes[cl] || ""; updateProgressBar(Math.round(((i + 1) / total) * 100)); try { const payload = { week: currentWeek, classe: cl, data: clData, notes: clNote }; const r = await fetch('/generate-word', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); if (r.ok) { const blob = await r.blob(); const cd = r.headers.get('content-disposition'); let filename = `plan_s${currentWeek}_${cl.replace(/[^a-z0-9]/gi, '_')}.docx`; if (cd) { const m = cd.match(/filename="?(.+?)"?(;|$)/i); if (m && m[1]) filename = m[1]; } if (typeof saveAs === 'function') { try { saveAs(blob, filename); ok++; } catch (e) { err++; console.error(`SaveAs ${cl}:`, e); displayAlert(t('error', {error: `Err sauvegarde ${cl}: ${e.message}`}), true); } } else { err++; console.error("saveAs non défini!"); displayAlert(t('error', {error: "saveAs non trouvé."}), true); break; } } else { const d = await r.json().catch(() => ({ message: `Erreur ${r.status}` })); console.error(`Err Word ${cl}:`, r.status, d); if (d.message && d.message.includes('Dates non trouvées côté serveur')) { displayAlert('no_word_dates', true, {week: currentWeek}); err++; } else { displayAlert('error_generating_word_for', true, {classe: cl, error: (d.message || 'Inconnue')}); err++; } } } catch (e) { err++; console.error(`Err Fetch Word ${cl}:`, e); displayAlert('error', true, { error: `Erreur réseau Word ${cl}: ${e.message}` }); } } hideProgressBar(); setButtonLoading('generateWordBtn', false, 'fas fa-file-word'); if (ok > 0 && err === 0) { displayAlert('generating_word_success', false, { count: ok }); } else if (ok > 0 && err > 0) { displayAlert('generating_word_partial', true, { ok: ok, err: err }); } else if (ok === 0 && err > 0) { if (err > 1) { displayAlert('generating_word_failed', true, {err: err}); } } else if (ok === 0 && err === 0) { displayAlert("no_data", true); } }
+        async function generateExcelWorkbook() { if (!currentWeek) { displayAlert("please_select_week", true); return; } setButtonLoading('generateExcelBtn',true,'fas fa-file-excel'); displayAlert('generating_excel', false, { week: currentWeek }); showProgressBar(); updateProgressBar(10); let err=0; try{ const payload = { week: currentWeek }; const r = await fetch('/generate-excel-workbook', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); updateProgressBar(70); if(r.ok){const blob=await r.blob(); const cd=r.headers.get('content-disposition'); let filename=`plan_s${currentWeek}_complet.xlsx`; if(cd){const m=cd.match(/filename="?(.+?)"?(;|$)/i); if(m&&m[1]) filename=m[1];} if(typeof saveAs==='function'){try{saveAs(blob,filename); updateProgressBar(100); displayAlert('generating_excel_success', false, { filename: filename });} catch(e){err++; console.error(`SaveAs Excel:`,e); displayAlert(t('error', { error: `Err sauvegarde Excel: ${e.message}` }), true); updateProgressBar(0);}} else {err++; console.error("saveAs non défini!"); displayAlert(t('error', { error: "saveAs non trouvé." }), true); updateProgressBar(0);}} else { const d=await r.json().catch(()=>({message:`Err ${r.status}`})); console.error(`Err Excel Wb:`,r.status,d); displayAlert('error_generating_excel', true, { error: (d.message || 'Inconnue') }); updateProgressBar(0); err++;} } catch(e){err++; console.error(`Err Fetch Excel Wb:`,e); displayAlert('error', { error: `Err réseau Excel: ${e.message}` }, true); updateProgressBar(0);} finally{hideProgressBar(); setButtonLoading('generateExcelBtn',false,'fas fa-file-excel');} }
+        async function loadPlanForWeek() { const sel = document.getElementById('weekSelector'); if (sel) { const wk = sel.value; if (wk) { await fetchPlanData(wk); } else { currentWeek = null; planData = []; headers = []; weeklyClassNotes = {}; filteredAndSortedData = []; createTableHeader(); displayPlanTable([]); document.getElementById('weekDateRange').textContent = ""; updateActionButtonsState(false); populateFilterOptions(); populateNotesClassSelector(); checkAndDisplayIncompleteTeachers(); displayAlert(''); } } else { console.error("#weekSelector absent"); displayAlert("error_structure", true); } }
+
+        // --- Langue/UI Updates (inchangées) ---
+        function applyLanguageSettings() { console.log(`Applying language: ${currentUserLanguage}`); document.documentElement.lang = currentUserLanguage; document.body.dir = (currentUserLanguage === 'ar') ? 'rtl' : 'ltr'; updateStaticUIElements(); if (currentWeek) { updateDynamicUIElements(); } else { document.getElementById('weekDateRange').textContent = ""; const initialTableMsg = document.getElementById('initial-table-message'); if (initialTableMsg) { initialTableMsg.textContent = t('select_week_to_display'); } else { const tBody = document.querySelector('#planTable tbody'); const colspanVal = document.querySelector('#planTable thead tr')?.querySelectorAll('th').length || 10; if (tBody) { tBody.innerHTML = `<tr id="initial-table-row"><td colspan="${colspanVal}" class="table-message">${t('select_week_to_display')}</td></tr>`; } } } if (document.getElementById('login-form').style.display !== 'none') { updateLoginUIElements(); } }
+        function updateStaticUIElements() { console.log("Updating static UI for lang:", currentUserLanguage); if (document.getElementById('main-content').style.display !== 'none') { document.title = t('main_page_title'); } else { document.title = t('login_title'); } updateLoginUIElements(); const mainTitle = document.getElementById('main-title'); if(mainTitle) mainTitle.textContent = t('main_page_title'); const logoutBtnText = document.querySelector('#logout-button .btn-text'); if(logoutBtnText) logoutBtnText.textContent = t('logout_button'); const toggleBtn = document.getElementById('toggleIncompleteBtn'); if (toggleBtn) { const btnTextSpan = toggleBtn.querySelector('.btn-text'); const listDiv=document.getElementById('incompleteTeachersDisplay'); if (btnTextSpan) { btnTextSpan.textContent = (listDiv && listDiv.style.display !== 'none') ? t('hide_incomplete') : t('display_incomplete'); } } const incompleteH4 = document.querySelector('#incompleteTeachersDisplay h4'); if(incompleteH4) incompleteH4.textContent = t('incomplete_teachers_title'); const incompleteLi = document.querySelector('#incompleteList li'); if(incompleteLi && incompleteLi.textContent.match(/(Chargement|Loading|جاري التحميل)/)) incompleteLi.textContent = t('loading'); const weekLabel = document.querySelector('label[for="weekSelector"]'); if(weekLabel) weekLabel.innerHTML = `<i class="fas fa-calendar-week"></i> ${t('week_label')}`; const adminTitle = document.getElementById('admin-title'); if(adminTitle) adminTitle.textContent = t('admin_actions_title'); const adminExcelLabel = document.getElementById('admin-excel-label'); if(adminExcelLabel) adminExcelLabel.innerHTML = `<i class="fas fa-file-excel"></i> ${t('admin_excel_label')}`; const saveUploadedDataBtnText = document.querySelector('#saveUploadedDataBtn .btn-text'); if(saveUploadedDataBtnText) saveUploadedDataBtnText.textContent = t('admin_save_button'); const genWordBtnText = document.querySelector('#generateWordBtn .btn-text'); if(genWordBtnText) genWordBtnText.textContent = t('generate_word_button'); const genExcelBtnText = document.querySelector('#generateExcelBtn .btn-text'); if(genExcelBtnText) genExcelBtnText.textContent = t('generate_excel_button'); const saveAllBtnText = document.querySelector('#saveAllDisplayedBtn .btn-text'); if(saveAllBtnText) saveAllBtnText.textContent = t('save_all_button'); const filterEnsLabel = document.getElementById('filter-enseignant-label'); if(filterEnsLabel) filterEnsLabel.innerHTML = `<i class="fas fa-user-tie"></i> ${t('filter_teacher_label')}`; const filterClsLabel = document.getElementById('filter-classe-label'); if(filterClsLabel) filterClsLabel.innerHTML = `<i class="fas fa-chalkboard-user"></i> ${t('filter_class_label')}`; const filterMatLabel = document.getElementById('filter-matiere-label'); if(filterMatLabel) filterMatLabel.innerHTML = `<i class="fas fa-book"></i> ${t('filter_material_label')}`; const filterPerLabel = document.getElementById('filter-periode-label'); if(filterPerLabel) filterPerLabel.innerHTML = `<i class="fas fa-clock"></i> ${t('filter_period_label')}`; const filterJourLabel = document.getElementById('filter-jour-label'); if(filterJourLabel) filterJourLabel.innerHTML = `<i class="fas fa-calendar-day"></i> ${t('filter_day_label')}`; const notesClsLabel = document.getElementById('notes-class-label'); if(notesClsLabel) notesClsLabel.innerHTML = `<i class="fas fa-sticky-note"></i> ${t('notes_for_class')}`; const notesInput = document.getElementById('notesInput'); if(notesInput && notesInput.placeholder.match(/(Sélectionnez|اختر|Select)/)){ notesInput.placeholder = t('select_class_placeholder'); } const saveNotesBtnText = document.querySelector('#saveNotesBtn .btn-text'); if(saveNotesBtnText) saveNotesBtnText.textContent = t('save_notes_button'); updateFilterOptionDefaultTexts(); /* NOUVEAU */ const adminReportLabel = document.getElementById('admin-report-class-label'); if (adminReportLabel) adminReportLabel.innerHTML = `<i class="fas fa-school"></i> ${t('admin_report_class_label')}`; const adminReportBtnText = document.querySelector('#generateFullReportBtn .btn-text'); if (adminReportBtnText) adminReportBtnText.textContent = t('generate_full_report_button'); }
+        function updateLoginUIElements() { const loginH1 = document.querySelector('#login-form h1'); if(loginH1) loginH1.textContent = t('login_title'); const userLabel = document.querySelector('label[for="username"]'); if(userLabel) userLabel.textContent = t('login_username_label'); const passLabel = document.querySelector('label[for="password"]'); if(passLabel) passLabel.textContent = t('login_password_label'); const rememberLabel = document.getElementById('remember-me-label'); if(rememberLabel) rememberLabel.textContent = t('remember_me'); const loginBtnText = document.querySelector('#login-button .btn-text'); if(loginBtnText) loginBtnText.textContent = t('login_button_text'); if (document.getElementById('login-form').style.display !== 'none') { document.title = t('login_title'); } }
+        function updateDynamicUIElements() { console.log("Updating dynamic UI for lang:", currentUserLanguage); const dateRangeEl=document.getElementById('weekDateRange'); const weekNum = parseInt(currentWeek, 10); const dates = specificWeekDateRanges[weekNum]; if(weekStartDate && dates?.end){ const s = weekStartDate; const e = new Date(dates.end+'T00:00:00Z'); if(!isNaN(s.getTime())&&!isNaN(e.getTime())){ dateRangeEl.textContent = `${t('week_label')} ${currentWeek} : ${isArabicUser() ? 'من' : (currentUserLanguage === 'en' ? 'From' : 'Du')} ${formatDateForDisplay(s)} ${isArabicUser() ? 'إلى' : (currentUserLanguage === 'en' ? 'to' : 'à')} ${formatDateForDisplay(e)}`; } else { dateRangeEl.textContent=`${t('week_label')} ${currentWeek} (Err dates)`; } } else { dateRangeEl.textContent=`${t('week_label')} ${currentWeek} (${t('no_data')}: dates non définies)`; } createTableHeader(); displayPlanTable(filteredAndSortedData); const notesInput = document.getElementById('notesInput'); const notesClassSel = document.getElementById('notesClassSelector'); if (notesInput && notesClassSel) { if (notesClassSel.value) { const selText = notesClassSel.options[notesClassSel.selectedIndex].text; notesInput.placeholder = t('notes_placeholder', { classText: selText }); } else { notesInput.placeholder = t('select_class_placeholder'); } } }
+
+        // --- Login/Logout (MODIFIED) ---
+        async function handleLogin() { 
+            const usernameInput = document.getElementById('username'); 
+            const passwordInput = document.getElementById('password'); 
+            const rememberMeCheckbox = document.getElementById('rememberMe'); 
+            const loginButton = document.getElementById('login-button'); 
+            const errorDiv = document.getElementById('login-error'); 
+            const username = usernameInput.value.trim(); 
+            const password = passwordInput.value; 
+            currentUserLanguage = 'fr'; 
+            if (!username || !password) { errorDiv.textContent = "Entrez nom d'utilisateur et mot de passe."; errorDiv.style.display = 'block'; return; } 
+            errorDiv.style.display = 'none'; 
+            setButtonLoading('login-button', true, 'fas fa-sign-in-alt'); 
+            try { 
+                const response = await fetch('/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password }) }); 
+                const result = await response.json(); 
+                if (response.ok && result.success) { 
+                    loggedInUser = result.username; 
+                    if (arabicTeachers.includes(loggedInUser)) { currentUserLanguage = 'ar'; } 
+                    else if (loggedInUser === englishTeacher) { currentUserLanguage = 'en'; } 
+                    else { currentUserLanguage = 'fr'; } 
+                    console.log(`Connecté: ${loggedInUser} (Lang: ${currentUserLanguage})`); 
+                    if (rememberMeCheckbox.checked) { localStorage.setItem('rememberedUsername', loggedInUser); } 
+                    else { localStorage.removeItem('rememberedUsername'); } 
+                    document.getElementById('login-form').style.display = 'none'; 
+                    document.getElementById('main-content').style.display = 'block'; 
+                    applyLanguageSettings(); 
+                    document.getElementById('loggedInUserInfo').textContent = t('connected_as', { user: loggedInUser }); 
+                    if (loggedInUser === 'Mohamed') { 
+                        document.getElementById('admin-actions').style.display = 'flex'; 
+                        // ===== NOUVEAU : Charger les classes pour le rapport admin =====
+                        populateAdminReportClassSelector();
+                    } else { 
+                        document.getElementById('admin-actions').style.display = 'none'; 
+                    } 
+                    currentWeek = null; 
+                    planData = []; 
+                    headers = []; 
+                    weeklyClassNotes = {}; 
+                    filteredAndSortedData = []; 
+                    document.getElementById('weekSelector').value = ""; 
+                    createTableHeader(); 
+                    displayPlanTable([]); 
+                    populateFilterOptions(); 
+                    populateNotesClassSelector(); 
+                    checkAndDisplayIncompleteTeachers(); 
+                    updateActionButtonsState(false); 
+                    displayAlert('welcome_user', false, { user: loggedInUser }); 
+                } else { 
+                    errorDiv.textContent = result.message || "Échec connexion."; 
+                    errorDiv.style.display = 'block'; 
+                    loggedInUser = null; 
+                    currentUserLanguage = 'fr'; 
+                    applyLanguageSettings(); 
+                } 
+            } catch (error) { 
+                console.error("Erreur connexion fetch:", error); 
+                errorDiv.textContent = "Erreur communication serveur."; 
+                errorDiv.style.display = 'block'; 
+                loggedInUser = null; 
+                currentUserLanguage = 'fr'; 
+                applyLanguageSettings(); 
+            } finally { 
+                setButtonLoading('login-button', false, 'fas fa-sign-in-alt'); 
+            } 
+        }
+        function handleLogout() { console.log("Déconnexion par:", loggedInUser); localStorage.removeItem('rememberedUsername'); loggedInUser = null; currentWeek = null; planData = []; headers = []; weeklyClassNotes = {}; filteredAndSortedData = []; incompleteTeachersInfo = {}; uploadedPlanData = null; document.getElementById('main-content').style.display = 'none'; document.getElementById('login-form').style.display = 'block'; document.getElementById('username').value = ''; document.getElementById('password').value = ''; document.getElementById('rememberMe').checked = false; document.getElementById('login-error').textContent = ''; document.getElementById('login-error').style.display = 'none'; currentUserLanguage = 'fr'; applyLanguageSettings(); displayAlert(''); hideProgressBar(); console.log("État appli réinitialisé après logout."); }
+        function togglePasswordVisibility() { const passwordInput = document.getElementById('password'); const toggleIcon = document.getElementById('togglePassword'); if (!passwordInput || !toggleIcon) return; const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password'; passwordInput.setAttribute('type', type); toggleIcon.className = (type === 'password') ? 'fas fa-eye password-toggle-icon' : 'fas fa-eye-slash password-toggle-icon'; }
+
+        // --- Initialisation (inchangée) ---
+        document.addEventListener('DOMContentLoaded', () => { console.log("DOM chargé."); const loginButton = document.getElementById('login-button'); const passwordInput = document.getElementById('password'); const usernameInput = document.getElementById('username'); const logoutButton = document.getElementById('logout-button'); const togglePasswordIcon = document.getElementById('togglePassword'); if (loginButton) { loginButton.addEventListener('click', handleLogin); if (passwordInput) { passwordInput.addEventListener('keypress', function (e) { if (e.key === 'Enter') { loginButton.click(); } }); } if (usernameInput) { usernameInput.addEventListener('keypress', function (e) { if (e.key === 'Enter') { loginButton.click(); } }); } } else { console.error("Btn connexion absent!"); } if (logoutButton) { logoutButton.addEventListener('click', handleLogout); } else { console.error("Btn déconnexion absent!"); } if (togglePasswordIcon) { togglePasswordIcon.addEventListener('click', togglePasswordVisibility); } else { console.error("Icone pwd absente!"); } const rememberedUsername = localStorage.getItem('rememberedUsername'); if (rememberedUsername && usernameInput) { usernameInput.value = rememberedUsername; document.getElementById('rememberMe').checked = true; if (passwordInput) { passwordInput.focus(); } console.log(`Utilisateur '${rememberedUsername}' pré-rempli.`); } updateActionButtonsState(false); const saveAllBtn = document.getElementById('saveAllDisplayedBtn'); if (saveAllBtn) saveAllBtn.disabled = true; const saveAdminBtn = document.getElementById('saveUploadedDataBtn'); if (saveAdminBtn) saveAdminBtn.disabled = true; const saveNotesBtn = document.getElementById('saveNotesBtn'); if(saveNotesBtn) saveNotesBtn.disabled = true; document.getElementById('login-form').style.display = 'block'; document.getElementById('main-content').style.display = 'none'; currentUserLanguage = 'fr'; applyLanguageSettings(); createTableHeader(); const tBody = document.querySelector('#planTable tbody'); if (tBody) { const initialColspan = document.querySelector('#planTable thead tr')?.querySelectorAll('th').length || 10; tBody.innerHTML = `<tr id="initial-table-row"><td colspan="${initialColspan}" class="table-message">${t('select_week_to_display')}</td></tr>`; } });
+        console.log("Script principal terminé.");
+    </script>
+
+</body>
+</html>
